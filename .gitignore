@@ -1,0 +1,18 @@
+node_modules/
+dist/
+*.log
+.env
+.DS_Store
+*.tgz
+
+# IDE
+.vscode/
+.idea/
+
+# Build outputs
+*.js.map
+*.d.ts.map
+
+# Temp files
+tmp/
+temp/

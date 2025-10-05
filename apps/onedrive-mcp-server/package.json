@@ -1,0 +1,28 @@
+{
+  "name": "@swoft-ai/onedrive-mcp-server",
+  "version": "1.0.1",
+  "description": "Portable OneDrive MCP Server for SWOFT team collaboration",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "onedrive-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/bundle-dependencies.js",
+    "deploy:onedrive": "node ../../scripts/deploy-to-onedrive.js onedrive-mcp-server",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist node_modules"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "glob": "^10.3.10",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.9.2"
+  },
+  "keywords": ["onedrive", "mcp", "swoft", "portable"],
+  "author": "SWOFT AI Platform",
+  "license": "PROPRIETARY"
+}

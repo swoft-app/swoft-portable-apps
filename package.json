@@ -1,0 +1,25 @@
+{
+  "name": "swoft-portable-apps",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portable applications and tools for SWOFT - Self-contained utilities",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swoft-app/swoft-portable-apps"
+  },
+  "author": "SWOFT AI <support@swoft.ai>",
+  "license": "PROPRIETARY",
+  "scripts": {
+    "build": "pnpm -r build",
+    "deploy:all": "node scripts/deploy-all.js",
+    "clean": "pnpm -r clean"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

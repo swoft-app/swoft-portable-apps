@@ -17,24 +17,22 @@ import {
 import { CloudStorageManager } from './CloudStorageManager.js';
 import { OneDriveProvider } from './providers/OneDriveProvider.js';
 
-// Suppress ALL console output in MCP mode to keep STDOUT/STDERR clean
-// MCP protocol requires clean STDOUT for JSON-RPC
-const QUIET_MODE = process.env.MCP_QUIET !== 'false'; // Default: quiet
+/**
+ * MCP SDK Standard Logging Practice:
+ * - STDOUT: JSON-RPC protocol messages ONLY (kept clean by MCP SDK)
+ * - STDERR: All logging, debugging, errors (console.error, console.warn, etc.)
+ *
+ * We redirect console.log/info/warn → console.error (STDERR)
+ * This keeps STDOUT clean while allowing proper MCP logging
+ */
+const originalConsole = { ...console };
 
-if (QUIET_MODE) {
-  // Suppress all console output
-  console.log = () => {};
-  console.warn = () => {};
-  console.info = () => {};
-  console.error = () => {};
-  console.debug = () => {};
-} else {
-  // Redirect to STDERR for debugging (when MCP_QUIET=false)
-  const originalConsole = { ...console };
-  console.log = (...args: any[]) => originalConsole.error('[LOG]', ...args);
-  console.warn = (...args: any[]) => originalConsole.error('[WARN]', ...args);
-  console.info = (...args: any[]) => originalConsole.error('[INFO]', ...args);
-}
+// Redirect all console methods to STDERR (MCP SDK best practice)
+console.log = (...args: any[]) => originalConsole.error('[LOG]', ...args);
+console.warn = (...args: any[]) => originalConsole.error('[WARN]', ...args);
+console.info = (...args: any[]) => originalConsole.error('[INFO]', ...args);
+console.debug = (...args: any[]) => originalConsole.error('[DEBUG]', ...args);
+// console.error already goes to STDERR - keep as-is
 
 class CloudStorageMcpServer {
   private server: Server;

@@ -1,0 +1,40 @@
+{
+  "name": "@swoft-ai/cloud-storage",
+  "version": "2.0.0",
+  "description": "Cloud storage abstraction layer for SWOFT - Works with OneDrive, iCloud, and Electron apps",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "swoft-cloud-storage": "./dist/mcp-server.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./mcp": {
+      "import": "./dist/mcp-server.js",
+      "types": "./dist/mcp-server.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "deploy:onedrive": "node ../../scripts/deploy-to-onedrive.js swoft-cloud-storage",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist node_modules",
+    "test": "echo 'Tests coming soon'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "glob": "^10.3.10",
+    "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.9.2"
+  },
+  "keywords": ["cloud-storage", "onedrive", "mcp", "swoft", "portable", "electron"],
+  "author": "SWOFT AI Platform",
+  "license": "PROPRIETARY"
+}

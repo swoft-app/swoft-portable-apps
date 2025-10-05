@@ -16,10 +16,6 @@ import {
 
 import { CloudStorageManager } from './CloudStorageManager.js';
 import { OneDriveProvider } from './providers/OneDriveProvider.js';
-import { config as dotenvConfig } from 'dotenv';
-
-// Load environment variables
-dotenvConfig();
 
 // Suppress console logs in MCP mode
 const originalConsole = { ...console };
@@ -119,11 +115,12 @@ class CloudStorageMcpServer {
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      const params = args as Record<string, any> | undefined;
 
       try {
         switch (name) {
           case 'list_docs': {
-            const files = await this.storage.list(args?.subfolder);
+            const files = await this.storage.list(params?.subfolder);
             const provider = this.storage.getProvider();
             return {
               content: [
@@ -131,7 +128,7 @@ class CloudStorageMcpServer {
                   type: 'text',
                   text: JSON.stringify({
                     provider: provider.displayName,
-                    subfolder: args?.subfolder || '/',
+                    subfolder: params?.subfolder || '/',
                     files,
                     count: files.length
                   }, null, 2)
@@ -141,10 +138,10 @@ class CloudStorageMcpServer {
           }
 
           case 'read_doc': {
-            if (!args?.filename) {
+            if (!params?.filename) {
               throw new Error('filename parameter required');
             }
-            const content = await this.storage.read(args.filename);
+            const content = await this.storage.read(params.filename as string);
             return {
               content: [
                 {
@@ -156,10 +153,10 @@ class CloudStorageMcpServer {
           }
 
           case 'search_docs': {
-            if (!args?.pattern) {
+            if (!params?.pattern) {
               throw new Error('pattern parameter required');
             }
-            const results = await this.storage.search(args.pattern, args?.subfolder);
+            const results = await this.storage.search(params.pattern as string, params?.subfolder as string | undefined);
             const provider = this.storage.getProvider();
             return {
               content: [
@@ -167,8 +164,8 @@ class CloudStorageMcpServer {
                   type: 'text',
                   text: JSON.stringify({
                     provider: provider.displayName,
-                    pattern: args.pattern,
-                    subfolder: args?.subfolder,
+                    pattern: params?.pattern,
+                    subfolder: params?.subfolder,
                     results,
                     count: results.length
                   }, null, 2)

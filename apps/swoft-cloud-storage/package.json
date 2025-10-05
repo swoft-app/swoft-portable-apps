@@ -19,7 +19,8 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "node build.js",
+    "build:tsc": "tsc",
     "deploy:onedrive": "node ../../scripts/deploy-to-onedrive.js swoft-cloud-storage",
     "dev": "tsc --watch",
     "clean": "rm -rf dist node_modules",
@@ -27,12 +28,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
-    "glob": "^10.3.10",
-    "dotenv": "^17.2.3"
+    "glob": "^10.3.10"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "esbuild": "^0.25.0"
   },
   "keywords": ["cloud-storage", "onedrive", "mcp", "swoft", "portable", "electron"],
   "author": "SWOFT AI Platform",

@@ -139,4 +139,11 @@ export class CloudStorageManager {
   async stat(path: string) {
     return this.getProvider().stat(path);
   }
+
+  /**
+   * Write file contents (delegates to active provider)
+   */
+  async write(path: string, content: string): Promise<void> {
+    return this.getProvider().write(path, content);
+  }
 }

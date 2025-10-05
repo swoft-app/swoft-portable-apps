@@ -340,14 +340,14 @@ export class MaildirService {
     const filename = this.emailService.generateMaildirFilename();
     const fullPath = `${inboxPath}/${filename}`;
 
-    // Write message (this will need CloudStorageManager.write() method)
-    // For now, return instruction
+    // Write message to inbox
+    await this.storage.write(fullPath, emlContent);
+
     return {
-      success: false,
+      success: true,
       filename,
       path: fullPath,
-      // message: `Write .eml to: ${fullPath} (not yet implemented - needs write support in CloudStorageManager)`
-    } as any;
+    };
   }
 
   // Private helper methods

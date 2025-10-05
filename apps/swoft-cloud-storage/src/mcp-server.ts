@@ -204,6 +204,44 @@ class CloudStorageMcpServer {
             },
             required: ['inbox_owner', 'item_filename']
           }
+        },
+        {
+          name: 'gtd_capture',
+          description: 'GTD CAPTURE: Capture something that has your attention into inbox (David Allen\'s GTD workflow)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              inbox_owner: {
+                type: 'string',
+                description: 'Inbox owner (email address, e.g., "derick@swoft.ai")'
+              },
+              from: {
+                type: 'string',
+                description: 'From address (usually same as inbox_owner for self-capture)'
+              },
+              subject: {
+                type: 'string',
+                description: 'What is it? (brief description)'
+              },
+              text: {
+                type: 'string',
+                description: 'Detailed description or context'
+              },
+              gtd: {
+                type: 'object',
+                description: 'GTD metadata (optional)',
+                properties: {
+                  project: { type: 'string' },
+                  context: { type: 'string' },
+                  priority: {
+                    type: 'string',
+                    enum: ['high', 'medium', 'low']
+                  }
+                }
+              }
+            },
+            required: ['inbox_owner', 'from', 'subject', 'text']
+          }
         }
       ]
     }));
@@ -391,6 +429,38 @@ class CloudStorageMcpServer {
                 {
                   type: 'text',
                   text: JSON.stringify(result, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'gtd_capture': {
+            const inboxOwner = params?.inbox_owner as string;
+            const from = params?.from as string;
+            const subject = params?.subject as string;
+            const text = params?.text as string;
+            const gtd = params?.gtd as any;
+
+            const result = await this.maildirService.sendMessage({
+              from,
+              to: inboxOwner,
+              subject,
+              text,
+              gtd
+            });
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: result.success,
+                    message: 'Item captured to inbox',
+                    inbox: inboxOwner,
+                    filename: result.filename,
+                    path: result.path,
+                    next_step: 'Use gtd_collect_inbox_items to view and gtd_clarify_item to process'
+                  }, null, 2)
                 }
               ]
             };

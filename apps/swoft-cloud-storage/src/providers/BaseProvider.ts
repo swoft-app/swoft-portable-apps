@@ -4,8 +4,8 @@
  * Abstract base class for cloud storage implementations
  */
 
-import { existsSync, statSync, readdirSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
 import { glob } from 'glob';
 import type { CloudStorageProvider, FileMetadata } from '../types.js';
 
@@ -111,5 +111,21 @@ export abstract class BaseCloudStorageProvider implements CloudStorageProvider {
       modified: stats.mtime,
       isDirectory: stats.isDirectory()
     };
+  }
+
+  /**
+   * Write file contents
+   */
+  async write(path: string, content: string): Promise<void> {
+    const workspacePath = this.getWorkspacePath();
+    const fullPath = join(workspacePath, path);
+
+    // Ensure parent directory exists
+    const dir = dirname(fullPath);
+    if (!existsSync(dir)) {
+      mkdirSync(dir, { recursive: true });
+    }
+
+    writeFileSync(fullPath, content, 'utf-8');
   }
 }

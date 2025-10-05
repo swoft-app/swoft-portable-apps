@@ -29,6 +29,9 @@ export interface CloudStorageProvider {
 
   /** Get file metadata */
   stat(path: string): Promise<FileMetadata>;
+
+  /** Write file contents */
+  write(path: string, content: string): Promise<void>;
 }
 
 export interface FileMetadata {

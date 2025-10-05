@@ -99,8 +99,12 @@ export class EmailMessageService {
   }
 
   /**
-   * Generate Maildir filename (unique identifier)
-   * Format: {timestamp}.{pid}.{hostname}:2,{flags}
+   * Generate Maildir filename (Windows-compatible)
+   * Format: {timestamp}.{pid}.{hostname}_2,{flags}.eml
+   *
+   * Note: Uses underscore instead of colon (Windows doesn't allow : in filenames)
+   * Traditional Maildir: filename:2,flags
+   * Windows-safe:       filename_2,flags
    */
   generateMaildirFilename(flags: string = ''): string {
     const timestamp = Math.floor(Date.now() / 1000);
@@ -108,13 +112,17 @@ export class EmailMessageService {
     const hostname = 'swoft.local';
     const uniqueId = `${timestamp}.${pid}.${hostname}`;
 
-    // Add .eml extension
-    return flags ? `${uniqueId}:2,${flags}.eml` : `${uniqueId}:2,.eml`;
+    // Use underscore instead of colon for Windows compatibility
+    return flags ? `${uniqueId}_2,${flags}.eml` : `${uniqueId}_2,.eml`;
   }
 
   /**
    * Parse Maildir filename flags
    * S = Seen, R = Replied, F = Flagged, D = Draft, T = Trashed
+   *
+   * Supports both formats:
+   * - Traditional: filename:2,flags
+   * - Windows-safe: filename_2,flags
    */
   parseMaildirFlags(filename: string): {
     seen: boolean;
@@ -123,7 +131,8 @@ export class EmailMessageService {
     draft: boolean;
     trashed: boolean;
   } {
-    const flagMatch = filename.match(/:2,([A-Z]*)/);
+    // Try both colon (traditional) and underscore (Windows-safe) formats
+    const flagMatch = filename.match(/[_:]2,([A-Z]*)/);
     const flags = flagMatch ? flagMatch[1] : '';
 
     return {

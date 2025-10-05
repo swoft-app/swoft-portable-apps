@@ -107,31 +107,11 @@ async function buildPortable() {
       process.exit(1);
     }
 
-    // Copy node_modules (external packages need this)
-    // Skip .bin directories (contain symlinks that cause cross-platform issues)
-    console.log('📦 Copying node_modules (external dependencies)...');
-    console.log('   ⏳ This may take a minute...');
-    try {
-      cpSync('node_modules', 'dist/node_modules', {
-        recursive: true,
-        dereference: false, // Don't follow symlinks
-        errorOnExist: false,
-        force: true,
-        filter: (src) => {
-          // Skip .bin directories (symlinks cause cross-platform issues)
-          const normalizedPath = src.split(sep).join('/');
-          if (normalizedPath.includes('/node_modules/.bin')) {
-            return false;
-          }
-          return true;
-        }
-      });
-      console.log('   ✅ node_modules copied');
-    } catch (err) {
-      console.error('❌ FATAL: Could not copy node_modules:', err.message);
-      console.error('   This is required for mailparser/nodemailer dependencies');
-      process.exit(1);
-    }
+    // NOTE: node_modules NOT copied to dist/
+    // The MCP server expects to run from the repo with node_modules installed
+    // This prevents massive OneDrive syncs (node_modules can be 100MB+)
+    console.log('📦 Skipping node_modules copy (expects repo installation)');
+    console.log('   ℹ️  MCP server will use ../node_modules from repo');
 
     // Copy README
     if (existsSync('README.md')) {
@@ -144,8 +124,12 @@ async function buildPortable() {
       'dist/mcp-server.js',
       'dist/index.js',
       'dist/package.json',
-      'dist/node_modules/mailparser',
-      'dist/node_modules/nodemailer',
+    ];
+
+    // Validate repo has required dependencies
+    const requiredDeps = [
+      'node_modules/mailparser',
+      'node_modules/nodemailer',
     ];
 
     for (const file of requiredFiles) {
@@ -155,22 +139,33 @@ async function buildPortable() {
       }
     }
 
+    for (const dep of requiredDeps) {
+      if (!existsSync(dep)) {
+        console.error(`❌ FATAL: Missing dependency: ${dep}`);
+        console.error('   Run: npm install');
+        process.exit(1);
+      }
+    }
+
     console.log('✅ Build complete and validated!');
     console.log('');
-    console.log('📦 Portable bundle created:');
+    console.log('📦 Build output:');
     console.log('   dist/mcp-server.js      - MCP server (bundled)');
-    console.log('   dist/index.js           - Library exports (for Electron)');
-    console.log('   dist/node_modules/      - External dependencies');
+    console.log('   dist/index.js           - Library exports');
+    console.log('   node_modules/           - Dependencies (not copied)');
     console.log('');
-    console.log('🎯 Cross-platform ready:');
-    console.log('   ✅ Windows (copy dist/ folder)');
-    console.log('   ✅ macOS (copy dist/ folder)');
-    console.log('   ✅ Linux (copy dist/ folder)');
+    console.log('🎯 Deployment Strategy:');
+    console.log('   ✅ Run from REPO (git clone)');
+    console.log('   ❌ NOT from OneDrive (avoids massive sync)');
     console.log('');
-    console.log('🚀 Deploy to OneDrive:');
-    console.log('   npm run deploy:onedrive');
+    console.log('📝 Setup Instructions:');
+    console.log('   1. git clone https://github.com/swoft-app/swoft-portable-apps');
+    console.log('   2. cd swoft-portable-apps/apps/swoft-cloud-storage');
+    console.log('   3. npm install');
+    console.log('   4. npm run build');
+    console.log('   5. Point Claude Desktop to: <repo-path>/dist/mcp-server.js');
     console.log('');
-    console.log('💡 dist/ folder is fully portable - just copy and run!');
+    console.log('💡 Why? node_modules is 100MB+ - too big for OneDrive sync!');
 
   } catch (error) {
     console.error('❌ FATAL: Build failed:', error.message);

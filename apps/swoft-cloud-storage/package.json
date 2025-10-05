@@ -28,14 +28,25 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
-    "glob": "^10.3.10"
+    "@types/mailparser": "^3.4.6",
+    "@types/nodemailer": "^7.0.2",
+    "glob": "^10.3.10",
+    "mailparser": "^3.7.4",
+    "nodemailer": "^7.0.6"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "typescript": "^5.9.2",
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.2"
   },
-  "keywords": ["cloud-storage", "onedrive", "mcp", "swoft", "portable", "electron"],
+  "keywords": [
+    "cloud-storage",
+    "onedrive",
+    "mcp",
+    "swoft",
+    "portable",
+    "electron"
+  ],
   "author": "SWOFT AI Platform",
   "license": "PROPRIETARY"
 }

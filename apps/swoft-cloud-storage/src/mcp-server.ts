@@ -16,6 +16,9 @@ import {
 
 import { CloudStorageManager } from './CloudStorageManager.js';
 import { OneDriveProvider } from './providers/OneDriveProvider.js';
+import { GTDInboxService } from './services/GTDInboxService.js';
+import { EmailMessageService } from './services/EmailMessageService.js';
+import { MaildirService } from './services/MaildirService.js';
 
 /**
  * MCP SDK Standard Logging Practice:
@@ -37,12 +40,15 @@ console.debug = (...args: any[]) => originalConsole.error('[DEBUG]', ...args);
 class CloudStorageMcpServer {
   private server: Server;
   private storage: CloudStorageManager;
+  private gtdService: GTDInboxService;
+  private emailService: EmailMessageService;
+  private maildirService: MaildirService;
 
   constructor() {
     this.server = new Server(
       {
         name: 'swoft-cloud-storage',
-        version: '2.0.0',
+        version: '3.0.0',
       },
       {
         capabilities: {
@@ -59,6 +65,10 @@ class CloudStorageMcpServer {
       // Future: Add more providers here
       // new iCloudProvider(workspaceFolder),
     ]);
+
+    this.gtdService = new GTDInboxService();
+    this.emailService = new EmailMessageService();
+    this.maildirService = new MaildirService(this.storage, this.emailService);
 
     this.setupHandlers();
   }
@@ -118,6 +128,81 @@ class CloudStorageMcpServer {
           inputSchema: {
             type: 'object',
             properties: {}
+          }
+        },
+        {
+          name: 'gtd_list_inboxes',
+          description: 'GTD: List all available team member inboxes (human and AI agents)',
+          inputSchema: {
+            type: 'object',
+            properties: {}
+          }
+        },
+        {
+          name: 'gtd_collect_inbox_items',
+          description: 'GTD COLLECT: View items in inbox requiring clarification',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              inbox_owner: {
+                type: 'string',
+                description: 'Inbox owner (email address, e.g., "derick+claude@swoft.ai", "team@swoft.ai")'
+              },
+              limit: {
+                type: 'number',
+                description: 'Max items to return (default: 10, prevents context overflow)',
+                default: 10
+              }
+            },
+            required: ['inbox_owner']
+          }
+        },
+        {
+          name: 'gtd_clarify_item',
+          description: 'GTD CLARIFY: Process an inbox item - answer "What is it?" and "Is it actionable?"',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              inbox_owner: {
+                type: 'string',
+                description: 'Inbox owner (email address)'
+              },
+              item_filename: {
+                type: 'string',
+                description: 'Inbox item filename (.eml file)'
+              },
+              clarification: {
+                type: 'object',
+                description: 'GTD clarification answers',
+                properties: {
+                  what_is_it: { type: 'string' },
+                  is_actionable: { type: 'boolean' },
+                  outcome: {
+                    type: 'string',
+                    enum: ['next_action', 'project', 'waiting_for', 'reference', 'someday_maybe', 'trash']
+                  }
+                }
+              }
+            },
+            required: ['inbox_owner', 'item_filename', 'clarification']
+          }
+        },
+        {
+          name: 'gtd_organize_to_reference',
+          description: 'GTD ORGANIZE: Move processed item to reference (completed/archived)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              inbox_owner: {
+                type: 'string',
+                description: 'Inbox owner (email address)'
+              },
+              item_filename: {
+                type: 'string',
+                description: 'Item filename (.eml file)'
+              }
+            },
+            required: ['inbox_owner', 'item_filename']
           }
         }
       ]
@@ -203,6 +288,109 @@ class CloudStorageMcpServer {
                       displayName: p.displayName
                     }))
                   }, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'gtd_list_inboxes': {
+            const mailboxes = await this.maildirService.listMailboxes();
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    mailboxes: mailboxes.map(mb => ({
+                      email: mb.email,
+                      type: mb.type,
+                      category: mb.category
+                    })),
+                    count: mailboxes.length
+                  }, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'gtd_collect_inbox_items': {
+            const email = params?.inbox_owner as string;
+            const limit = params?.limit as number || 10;
+
+            const items = await this.maildirService.getInbox(email, limit);
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    inbox: email,
+                    format: 'Maildir + .eml (RFC 5322)',
+                    items_returned: items.length,
+                    limit_applied: limit,
+                    items: items.map(item => ({
+                      filename: item.filename,
+                      from: item.from,
+                      to: item.to,
+                      subject: item.subject,
+                      date: item.date,
+                      gtd: item.gtd
+                    }))
+                  }, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'gtd_clarify_item': {
+            const email = params?.inbox_owner as string;
+            const filename = params?.item_filename as string;
+            const clarification = params?.clarification as any;
+
+            const message = await this.maildirService.readMessage(email, filename);
+
+            if (!message) {
+              throw new Error(`Message not found: ${filename}`);
+            }
+
+            const gtdDecision = this.gtdService.createClarificationDecision(clarification);
+
+            // Truncate content to prevent context overflow
+            const contentPreview = message.text.length > 1000
+              ? message.text.slice(0, 1000) + '\n...(truncated)'
+              : message.text;
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    message: {
+                      filename,
+                      from: message.from.email,
+                      subject: message.subject,
+                      date: message.date
+                    },
+                    clarification: gtdDecision,
+                    content_preview: contentPreview,
+                    next_action: 'Move to appropriate GTD folder based on outcome'
+                  }, null, 2)
+                }
+              ]
+            };
+          }
+
+          case 'gtd_organize_to_reference': {
+            const email = params?.inbox_owner as string;
+            const filename = params?.item_filename as string;
+
+            const result = await this.maildirService.moveToFolder(email, filename, 'Reference');
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
                 }
               ]
             };

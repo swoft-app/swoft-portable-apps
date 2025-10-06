@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/DevApps4Biz.com/DevApps4Biz.com/swoft.ai - Documents/Team/inbox-kevin-claude/**)",
+      "Read(//d/DevApps4Biz.com/DevApps4Biz.com/swoft.ai - Documents/Mailboxes/People/kevin@swoft.ai/new/**)",
+      "Read(//d/DevApps4Biz.com/DevApps4Biz.com/swoft.ai - Documents/Mailboxes/People/derick+claude@swoft.ai/new/**)",
+      "Read(//d/DevApps4Biz.com/DevApps4Biz.com/swoft.ai - Documents/Mailboxes/People/kevin+claude@swoft.ai/new/**)",
+      "Bash(git fetch:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

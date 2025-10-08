@@ -146,7 +146,7 @@ class CloudStorageMcpServer {
             properties: {
               inbox_owner: {
                 type: 'string',
-                description: 'Inbox owner (email address, e.g., "derick+claude@swoft.ai", "team@swoft.ai")'
+                description: 'Inbox owner (email address, e.g., "synthia+derick@swoft.ai", "team@swoft.ai")'
               },
               limit: {
                 type: 'number',

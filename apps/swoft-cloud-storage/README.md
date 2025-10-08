@@ -134,8 +134,8 @@ Close and reopen Claude Desktop to load the MCP server.
 - `kevin@swoft.ai` - Kevin Gibaud (Product Lead)
 
 **AI Agents (+ addressing):**
-- `derick+claude@swoft.ai` - Derick's Claude assistant
-- `kevin+claude@swoft.ai` - Kevin's Claude assistant
+- `synthia+derick@swoft.ai` - Derick's Claude assistant
+- `synthia+kevin@swoft.ai` - Kevin's Claude assistant
 
 ---
 

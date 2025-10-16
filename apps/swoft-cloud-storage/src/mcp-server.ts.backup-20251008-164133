@@ -131,14 +131,6 @@ class CloudStorageMcpServer {
           }
         },
         {
-          name: 'list_onedrive_accounts',
-          description: 'List all available OneDrive accounts (diagnostic tool for multi-account setup)',
-          inputSchema: {
-            type: 'object',
-            properties: {}
-          }
-        },
-        {
           name: 'gtd_list_inboxes',
           description: 'GTD: List all available team member inboxes (human and AI agents)',
           inputSchema: {
@@ -154,7 +146,7 @@ class CloudStorageMcpServer {
             properties: {
               inbox_owner: {
                 type: 'string',
-                description: 'Inbox owner (email address, e.g., "synthia+derick@swoft.ai", "team@swoft.ai")'
+                description: 'Inbox owner (email address, e.g., "derick+claude@swoft.ai", "team@swoft.ai")'
               },
               limit: {
                 type: 'number',
@@ -214,26 +206,26 @@ class CloudStorageMcpServer {
           }
         },
         {
-          name: 'gtd_send_message',
-          description: 'GTD: Send a message/task to a team member\'s inbox. Use this to communicate tasks, requests, or information TO another person (not for self-capture).',
+          name: 'gtd_capture',
+          description: 'GTD CAPTURE: Capture something that has your attention into inbox (David Allen\'s GTD workflow)',
           inputSchema: {
             type: 'object',
             properties: {
-              to: {
+              inbox_owner: {
                 type: 'string',
-                description: 'Recipient email address (e.g., "derick@swoft.ai", "kevin@swoft.ai")'
+                description: 'Inbox owner (email address, e.g., "derick@swoft.ai")'
               },
               from: {
                 type: 'string',
-                description: 'Sender email address (e.g., "synthia+derick@swoft.ai")'
+                description: 'From address (usually same as inbox_owner for self-capture)'
               },
               subject: {
                 type: 'string',
-                description: 'Message subject (brief description)'
+                description: 'What is it? (brief description)'
               },
-              body: {
+              text: {
                 type: 'string',
-                description: 'Message body (detailed description or context)'
+                description: 'Detailed description or context'
               },
               gtd: {
                 type: 'object',
@@ -248,7 +240,7 @@ class CloudStorageMcpServer {
                 }
               }
             },
-            required: ['to', 'from', 'subject', 'body']
+            required: ['inbox_owner', 'from', 'subject', 'text']
           }
         }
       ]
@@ -337,45 +329,6 @@ class CloudStorageMcpServer {
                 }
               ]
             };
-          }
-
-          case 'list_onedrive_accounts': {
-            const provider = this.storage.getProvider();
-
-            // Check if provider is OneDriveProvider with getAvailableAccounts method
-            if ('getAvailableAccounts' in provider && typeof provider.getAvailableAccounts === 'function') {
-              const accounts = (provider as any).getAvailableAccounts();
-              return {
-                content: [
-                  {
-                    type: 'text',
-                    text: JSON.stringify({
-                      detected_accounts: accounts,
-                      active_account: {
-                        path: provider.basePath,
-                        workspace: process.env.CLOUD_STORAGE_WORKSPACE
-                      },
-                      configuration: {
-                        ONEDRIVE_PATH: process.env.ONEDRIVE_PATH || '(not set)',
-                        ONEDRIVE_ACCOUNT: process.env.ONEDRIVE_ACCOUNT || '(not set)',
-                        ONEDRIVE_ACCOUNT_TYPE: process.env.ONEDRIVE_ACCOUNT_TYPE || '(not set)',
-                        CLOUD_STORAGE_WORKSPACE: process.env.CLOUD_STORAGE_WORKSPACE || '(not set)'
-                      }
-                    }, null, 2)
-                  }
-                ]
-              };
-            } else {
-              return {
-                content: [
-                  {
-                    type: 'text',
-                    text: 'This diagnostic tool only works with OneDrive provider'
-                  }
-                ],
-                isError: true
-              };
-            }
           }
 
           case 'gtd_list_inboxes': {
@@ -481,18 +434,18 @@ class CloudStorageMcpServer {
             };
           }
 
-          case 'gtd_send_message': {
-            const to = params?.to as string;
+          case 'gtd_capture': {
+            const inboxOwner = params?.inbox_owner as string;
             const from = params?.from as string;
             const subject = params?.subject as string;
-            const body = params?.body as string;
+            const text = params?.text as string;
             const gtd = params?.gtd as any;
 
             const result = await this.maildirService.sendMessage({
               from,
-              to,
+              to: inboxOwner,
               subject,
-              text: body,
+              text,
               gtd
             });
 
@@ -502,12 +455,11 @@ class CloudStorageMcpServer {
                   type: 'text',
                   text: JSON.stringify({
                     success: result.success,
-                    message: 'Message sent to recipient inbox',
-                    recipient: to,
-                    from: from,
+                    message: 'Item captured to inbox',
+                    inbox: inboxOwner,
                     filename: result.filename,
                     path: result.path,
-                    next_step: 'Recipient can view with gtd_collect_inbox_items and process with gtd_clarify_item'
+                    next_step: 'Use gtd_collect_inbox_items to view and gtd_clarify_item to process'
                   }, null, 2)
                 }
               ]
